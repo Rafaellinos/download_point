@@ -24,6 +24,7 @@ def seconds_to_datetime(seconds):
 
 @app.route('/', methods=['GET'])
 def main_page():
+    app.logger.info("getting content in the folder")
     files = [f for f in listdir(PATH_DOCUMENTS) if isfile(join(PATH_DOCUMENTS, f))]
     formatted_files = []
     for file in files:
@@ -42,6 +43,7 @@ def main_page():
 
 @app.route('/download', methods=['GET'])
 def download(**kw):
+    app.logger.info("checking is file exists")
     file = PATH_DOCUMENTS + '/' + request.args.get('filename')
     if isfile(file):
         return send_file(file, as_attachment=True)
