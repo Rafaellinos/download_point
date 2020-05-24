@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+    download-api:
+        container_name: download-api
+        #image: 
+        build: ./
+        command: python3 /usr/src/flask_app/main.py
+        working_dir: /usr/src/flask_app
+        ports:
+            - "5000:5000"
