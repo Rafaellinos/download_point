@@ -78,11 +78,11 @@ def main_page(current_user):
     return jsonify(formatted_files), 200
 
 
-@app.route('/download', methods=['GET'])
+@app.route('/download/<filename>', methods=['GET'])
 @token_required
-def download(current_user):
+def download(current_user, filename):
     app.logger.info("checking is file exists")
-    file = PATH_DOCUMENTS + '/' + request.args.get('filename')
+    file = PATH_DOCUMENTS + '/' + filename
     if isfile(file):
         return send_file(file, as_attachment=True)
     return jsonify({'message': 'File not found :('}), 404
@@ -104,6 +104,9 @@ def get_user(current_user, public_id=None):
 @app.route('/user', methods=['GET'])
 @token_required
 def get_users(current_user):
+    
+    if not current_user.admin:
+        return {'message': "You don't have permission!"}, 403
     users = User.search()
     if not users:
         return {'message': 'The are no users in the server :('}, 404
@@ -118,12 +121,28 @@ def get_users(current_user):
 
 
 @app.route('/user', methods=['POST'])
-def post_user(current_user):
+def post_user():
+    
     data = request.get_json()
+
+    try:
+        login = data.get('login')
+        password = data.get('password')
+    except AttributeError:
+        return {'message': 'Content not found :('}, 500
+
+    if not login and not password:
+        return {'message': "Field login or passowrd is required!"}, 404
+    
+    exists = User.search(login=login)
+    if exists:
+        return {'message': "User already exists!"}, 404
+    
     user_model = User(
-        login=data.get('login'),
-        password=data.get('password'))
+        login=login,
+        password=password)
     new_id = user_model.do_commit()
+
     return {'message': f'User created successfully!. ID: {new_id}'}, 201
 
 
@@ -151,7 +170,7 @@ def delete_user(current_user, public_id=None):
     user = User.search(public_id=public_id)
     if not user:
         return {'message': 'user not found :('}, 404
-    if not user.admin:
+    if not current_user.admin:
         return {'message': 'You do not have permission to do that :('}, 403
     try:
         user.unlink()
@@ -178,6 +197,8 @@ def login():
     token = jwt.encode({'public_id': user.public_id,
                         'exp': datetime.utcnow() + timedelta(minutes=30)},
                        app.config['SECRET_KEY'])
+    
+    app.logger.error(str(token))
 
     return jsonify({'token': token.decode('UTF-8')}), 200
 
