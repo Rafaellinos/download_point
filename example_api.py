@@ -36,7 +36,8 @@ token = login('rafael2', '123').get('token')
 
 #pprint(get_users(token))
 
-pprint(get_files_list(token))
+#pprint(get_files_list(token))
+print(register('rafael','123'))
 
 #pprint(get_user('asd', 'f23a5b2e-4f11-4154-aabc-badaf2c64a16'))
 
