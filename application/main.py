@@ -1,3 +1,5 @@
+# -*- config:utf-8 -*-
+
 from flask import Flask, request, jsonify, send_file, make_response
 import jwt
 from datetime import datetime, timedelta
@@ -9,14 +11,11 @@ from functools import wraps
 from models.models import User
 from models.db import db
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///api.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__, instance_relative_config=True)
+app.config.from_object('config.Dev')
 
-PATH_DOCUMENTS = './documents'  # TODO GIVE THE FULL PATH
-DATE_PATTERN = '%d/%m/%Y - %H:%M:%S'
-
+PATH_DOCUMENTS = app.config['DOCUMENTS_FOLDER']  # TODO GIVE THE FULL PATH
+DATE_PATTERN = app.config['DATE_PATTERN']
 
 @app.before_first_request
 def init_db():
@@ -143,7 +142,7 @@ def post_user():
         password=password)
     new_id = user_model.do_commit()
 
-    return {'message': f'User created successfully!. ID: {new_id}'}, 201
+    return {'message': 'User created successfully!. Your id is: %s' % new_id}, 201
 
 
 @app.route('/user/<public_id>', methods=['PUT'])
@@ -197,15 +196,10 @@ def login():
     token = jwt.encode({'public_id': user.public_id,
                         'exp': datetime.utcnow() + timedelta(minutes=30)},
                        app.config['SECRET_KEY'])
-    
-    app.logger.error(str(token))
 
     return jsonify({'token': token.decode('UTF-8')}), 200
 
 
 if __name__ == '__main__':
     db.init_app(app)
-    app.run(
-        debug=True,
-        host='0.0.0.0',
-        port=5000)
+    app.run(host=app.config['HOST'])
