@@ -4,6 +4,12 @@
 docker-compose up -d
 <br/>
 
+## How it works
+
+You can download files in the documents directory. 
+But you need to register, login and use the token in order to do that.
+
+
 ## Quick start
 
 ```
